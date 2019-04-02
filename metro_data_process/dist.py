@@ -6,6 +6,7 @@ import json
 import time
 from math import radians, cos, sin, asin, sqrt
 from matplotlib import pyplot
+import numpy as np
 
 #公式计算两点间距离（m）
 
@@ -51,20 +52,6 @@ for i in range(541):
     for j in range(541):
         dist[i][j] = geodistance(station[i].E, station[i].N, station[j].E, station[j].N)
 
-distance = []
-sunnum = 270*541 - 541
-sum = 0
-for i in range(541):
-    j = i
-    while j < 541:
-        distance.append(dist[i][j])
-        sum += dist[i][j]
-        j += 1
-
-        
-print (sum / sunnum)
-
-
 with open("./matrix_data/dist.txt", 'w', encoding="utf-8") as file:
     for item in dist:
         item = (str(i) for i in item)
@@ -72,9 +59,22 @@ with open("./matrix_data/dist.txt", 'w', encoding="utf-8") as file:
 
         file.write(str_da + '\n')
 
-pyplot.hist(distance,100)
-pyplot.xlabel('lenth')
-pyplot.xlim(0.0,60000)
+
+distance = []
+for i in range(541):
+    dist[i] = sorted(dist[i])
+    for j in range(6):
+        if j == 0:
+            continue
+        distance.append(dist[i][j])
+
+
+
+pyplot.hist(distance,30,edgecolor="black")
+pyplot.xlim(0.0,4000)
+
+my_x_ticks = np.arange(0, 3000, 300)
+pyplot.xticks(my_x_ticks)
 pyplot.show()
 
 

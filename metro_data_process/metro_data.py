@@ -109,7 +109,7 @@ for inputdata in filenamelist:
         os.makedirs("./output")
     outfile = "./output/od_" + inputdata[:-4]
 
-    with open(outfile, 'a+') as file:
+    with open(outfile, 'w', encoding="utf-8") as file:
         for item in res_data:
             item = [str(i) for i in item]
             str_data = '\t'.join(item)

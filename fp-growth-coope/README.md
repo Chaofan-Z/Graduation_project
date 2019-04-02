@@ -7,11 +7,11 @@ flow_1.json 文件表格释义
 {
    "0" : [  #表示时段编号，以下为该时段编号的流量
       {
-         "82" : 1  #表示1条存在destination=0，origin=82 的出行，即第一个花括号中表示destination=1的出行，分号前的数字为origin，分号后为流量，
+         "82" : 1  #表示1条存在destination=1，origin=82 的出行，即第一个花括号中表示destination=1的出行，分号前的数字为origin，分号后为流量，
       },
       {
-         "10" : 1, #表示1条存在destination=1，origin=10 的出行
-         "11" : 3, #表示3条存在destination=1，origin=11 的出行
+         "10" : 1, #表示1条存在destination=2，origin=10 的出行
+         "11" : 3, #表示3条存在destination=2，origin=11 的出行
          "138" : 1,
          "21" : 3,
          "22" : 1,
@@ -24,6 +24,7 @@ flow_1.json 文件表格释义
      {},
 ]
 ```
+区域编号从1到542
 
 每个文件中表示某天48个时段中，每个时段从a到b的流量大小；
 

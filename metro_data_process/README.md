@@ -1,3 +1,42 @@
+#提取流程
+
+## 对应地铁站点，拼音，经纬度，像素点，对应区域id（0-540）
+```
+get_metro_location.py 
+```
+
+## 从原始地铁数据提取od信息
+```
+metro_data.py
+```
+
+## 从od信息提取流量信息
+```
+od_flowdata.py
+```
+
+原第一次提取由于区域id范围有误，这里加了一步normal，主要对regionid-1，以及gbk编码改为utf-8；目前已经修改过上面的代码
+
+```
+normal_od.py
+```
+
+## 将生成的flow数据生成输入矩阵，里面需要手动修改taxi和metro，分别生成
+```
+input_data_process.py
+```
+
+## 得到541个区域之间的距离
+```
+dist.py
+```
+
+纽约的数据画图，及分布
+
+```
+dists.py
+```
+
 #地铁数据处理
 
 ##编码方式

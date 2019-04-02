@@ -75,7 +75,6 @@ for item in normal:
 
 
 
-# todo: 根据像素点坐标确定regionid
 with io.open("./metroStation_infor/lable.json", 'r') as file:
         region = json.load(file)
 
@@ -87,7 +86,8 @@ with io.open("./metroStation_infor/lable.json", 'r') as file:
             for item2 in region:
                 if int(item2["x"]) == x and int(item2["y"]) == y:
                     # print(1)
-                    item.append(item2["lable"])
+                    # 这里根据需求统一将regionid - 1 如果需要重新跑实验，后面生成od的时候那个normal.py减一的操作要省略
+                    item.append(int(item2["lable"]) - 1)
                     new_normal.append(item)
                     break
 
@@ -97,11 +97,6 @@ for item in new_normal:
     str_data = '\t'.join(item)
     print(str_data)
   
-
-# for item in normal:
-#     #对应xy位置
-#     #judgeregionid(x, y)
-#     #item.append()
 
 
 

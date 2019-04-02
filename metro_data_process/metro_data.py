@@ -16,7 +16,7 @@ def maketimeslace(timestamp):
 
 # 处理地铁站点的区域划分
 metro_id = {}
-with open("./metro_station", 'r') as file:
+with open("./metroStation_infor/metro_station", 'r') as file:
     for line in file:
         infor = line.strip('\n').split('\t')
         metro_id[infor[0]] = infor[8]
@@ -66,7 +66,6 @@ for inputdata in filenamelist:
     for item in data:
         thedata = sorted(data[item],key=(lambda x:x[0]))
         i = 0
-
         res_index = 0
         while i < len(thedata):
             if i+1 >= len(thedata):
@@ -114,7 +113,7 @@ for inputdata in filenamelist:
         for item in res_data:
             item = [str(i) for i in item]
             str_data = '\t'.join(item)
-            file.write(str_data)
+            file.write(str_data + '\n')
 
     print(outfile, "写入完成")
     # with open(outfile, 'w') as file:

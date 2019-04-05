@@ -1,13 +1,3 @@
-# -*- encoding: utf-8 -*-
-'''
-@File    :   shanghai_real.py
-@Time    :   2019/04/03 14:47:15
-@Author  :   Zhengchaofan 
-@Contact :   zhengcfwork@gmail.com
-@Desc    :   None
-'''
-import os
-import json 
 from datetime import datetime, timedelta
 import numpy as np
 from sklearn.svm import OneClassSVM
@@ -15,23 +5,21 @@ from sklearn.svm import OneClassSVM
 from util import *
 
 #dataRoot = 'path_for_data'
-dataRoot = "./matrix_data/"
+dataRoot = './release/nyc/'
+tmpoutput = "./tmp_output/ny/"
+data = np.loadtxt(dataRoot + 'taxibike.txt')
+dists = np.loadtxt(dataRoot + 'dists.txt')
 
-data = np.loadtxt(dataRoot + 'taximetro.txt')
-dists = np.loadtxt(dataRoot + 'dist.txt')
-
-nR = 541 # number of regions
-
-# todo: 数据源不该有这么多啊
+nR = 862 # number of regions
 nS = 4 # number of data sources
 MPS = 30 # minutes per time slot
 nT = data.shape[0] # nummber of time slots
 
 print(data.shape)
 print(dists.shape)
-print(nT) # 16848
+print(nT) # 
 
-stDT = datetime(2015,4,1,0,0,0)
+stDT = datetime(2014,1,15,0,0,0)
 
 # Params for algorithm
 alpha = 0.01
@@ -41,15 +29,12 @@ nDailyAnomaly_r = int(60 / MPS * 24 * nR * beta)
 t_delta = 2
 corrThres = 0.95
 lCorr = 60 * 24 * 7 // MPS  # use one week data for calculating pearson correlation 
+R = 800
 
-#todo: 800需要改 nearby的距离
-R = 1200
-# todo: 这个参数什么意思
 nNearPart = 2
-
-mNear = np.identity(nR) # nR长度的单位矩阵
-mNear = np.concatenate((mNear, (dists > 0) & (dists <= R)))  # axis = 0横轴，axis = 1 纵轴，默认为0
-sMNear = np.repeat(mNear.sum(axis=1), nS*t_delta) 
+mNear = np.identity(nR)
+mNear = np.concatenate((mNear, (dists > 0) & (dists <= R)))
+sMNear = np.repeat(mNear.sum(axis=1), nS*t_delta)
 mNearTile = np.tile(mNear, (1, nS*t_delta))
 
 score_ind = np.zeros((nT, nR*nS))
@@ -62,20 +47,33 @@ model_r = OneClassSVM(kernel="rbf", nu=0.1)
 model_int = OneClassSVM(kernel="rbf", nu=0.1)
 train_r = np.zeros((0, nS))
 train_int = np.zeros((0, dVector))
-tsTrain = 60 * 24 * 7 // MPS
+# 这个应该是训练的时间跨度
+tsTrain = 60 * 24 * 7 // MPS 
 nTrain = tsTrain * nR
 
-detect_st = (datetime(2015,4,8) - stDT).days * 24 * 60 // MPS  # detect anomamlie
-ed = (datetime(2015,4,30) - stDT).days * 24 * 60 // MPS
+# 317days
+detect_st = (datetime(2014,11,27) - stDT).days * 24 * 60 // MPS  # detect anomamlies in 2014-11-27
+ed = (datetime(2014,11,28) - stDT).days * 24 * 60 // MPS
 st = max(detect_st - tsTrain, lCorr)
+
+# detect_st : 11月27日的起始时间片  
+# ed : 11月28日起始时间片           15216
+# tsTrain : 训练跨度
+# st : detect_st - 训练时间跨度（这里为一周）或者 一周（取max）       14832  
+print(st, ed, detect_st, tsTrain) #14832 15216 15168 336
 
 
 trained = False
 p1 = np.einsum('ij,ik->kj', data[(st-lCorr):st,:], data[(st-lCorr):st,:])
+np.savetxt(tmpoutput + "p1.txt", p1, fmt="%d")
+
+# 认为这里只训练了 从11月27日-7天 到11月28日的结果，且仅仅在11月27日以后的时间片才用于分类学习
 for ts in range(st, ed):
+    print("ts:", ts)
+    print("ddddd")
     print('\r' + str(ts), end='')
 
-        # update pearson correlation
+    # update pearson correlation
     pp = np.nan_to_num(pairPearson(data[(ts-lCorr):ts,:], data[(ts-lCorr):ts,:], p1))
     p1 = p1 + data[ts,:] * data[ts,:][:,None]
     p1 = p1 - data[ts-lCorr,:] * data[ts-lCorr,:][:,None] 
@@ -103,16 +101,13 @@ for ts in range(st, ed):
     train_r = np.r_[train_r, x_r][-nTrain:,:]
     train_int = np.r_[train_int, x_int][-nTrain:,:]
 
+    # 
     if ts > detect_st:
         if ts % (60 // MPS * 24) == 0 or not trained:
             model_r.fit(train_r)
-            print("fit 1 done!")
             model_int.fit(train_int)
             trained = True
         
-        print("fit 2 done!")
-
-
         score_r[ts,:] = model_r.decision_function(x_r).flatten()
         score_int[ts,:] = model_int.decision_function(x_int).flatten()
         argsort_r = score_r[(ts-60*24//MPS+1):(ts+1),:].flatten().argsort()
@@ -122,10 +117,6 @@ for ts in range(st, ed):
         iAnomalies = selected_int[(selected_int // nR) == (60 * 24 // MPS - 1)] % nR
         iAnomalies = iAnomalies[score_int[ts,iAnomalies] != 100]
         anomalies[ts,iAnomalies] = 1
-        #iAnomalies 396 [291 290 247 246  56 118  55 106  70   3 119   4 107 243 137 308 476 211
-#  309 455  90 115 139 212 413 386 412 477 114 387  34  35 224 322 138]
-# 397fit 2 done!
-        print("iAnomalies", ts, iAnomalies)
 
-
-np.savetxt(dataRoot + "anomalies2.txt", anomalies, fmt="%d") # detected anomalies
+print("kaishixueri")
+np.savetxt(dataRoot + "anomalies2.txt", anomalies) # detected anomalies
